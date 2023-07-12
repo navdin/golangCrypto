@@ -144,9 +144,11 @@ func F8() {
 		return
 	}
 	ethBal := GetCurrentBalanceInAccount(validInput)
-	ethValueFloat64 := RoundOffToFloat64(ethBal)
 	walletDetails := blockchain.AccountMap[validInput]
-	TransferEthBetweenAccounts(validInput, ACCOUNT_MAIN, ethValueFloat64, true)
+	ethValueFloat64, goAhead := MaintainMinBalance(ethBal)
+	if goAhead {
+	   TransferEthBetweenAccounts(validInput, ACCOUNT_MAIN, ethValueFloat64, true)
+	}
 	RemoveFileFromCurrentDir(walletDetails.URLpath)
 	delete(blockchain.AccountMap, walletDetails.Id)
 	fmt.Println("Wallet ", validInput, " is deleted.")
@@ -174,8 +176,10 @@ func transferBalancesToMainAccount(enablePrints bool) {
 		go func(val blockchain.AccountDetails) {
 			fromAcDetails := blockchain.AccountMap[val.Id]
 			ethBal := GetCurrentBalanceInAccount(val.Id)
-			ethValueFloat64 := RoundOffToFloat64(ethBal)
-			TransferEthBetweenAccounts(fromAcDetails.Id, mainAcDetails.Id, ethValueFloat64, false)
+			ethValueFloat64, goAhead := MaintainMinBalance(ethBal)
+			if goAhead {
+			 TransferEthBetweenAccounts(fromAcDetails.Id, mainAcDetails.Id, ethValueFloat64, false)
+			}
 			RemoveFileFromCurrentDir(fromAcDetails.URLpath)
 			delete(blockchain.AccountMap, key)
 			waitgrp.Done()
@@ -183,6 +187,15 @@ func transferBalancesToMainAccount(enablePrints bool) {
 	}
 	waitgrp.Wait()
 	fmt.Println("Transactions Done.")
+}
+
+func MaintainMinBalance(ethBal *big.Float) (float64, bool) {
+	ethValueF64, _ := ethBal.Float64()
+	ethValueF64 = ethValueF64 - WalletMinBalance
+	if ethValueF64 < MinTransferValue {
+		return 0, false
+	}
+	return ethValueF64, true
 }
 
 func RoundOffToFloat64(ethBal *big.Float) (float64) {
