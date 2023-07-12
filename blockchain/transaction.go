@@ -2,10 +2,14 @@ package blockchain
 
 import (
 	"context"
+	"fmt"
+	"strconv"
+
 	// "fmt"
 	"io/ioutil"
 	"log"
 	"math/big"
+
 	// "strconv"
 
 	"github.com/ethereum/go-ethereum/accounts/keystore"
@@ -16,7 +20,7 @@ import (
 
 const gasLimit = 21000
 
-func MakeTransaction(account1 string, account2 string, value float64, blClinet ethclient.Client) (string, error){
+func MakeTransaction(account1 string, account2 string, value float64, blClinet ethclient.Client) (string, error, *big.Int){
 	ac1Adrs := common.HexToAddress(AccountMap[account1].AddressString)
 	ac2Adrs := common.HexToAddress(AccountMap[account2].AddressString)
 
@@ -30,10 +34,11 @@ func MakeTransaction(account1 string, account2 string, value float64, blClinet e
 	amount := big.NewInt((int64)(value*1000000000000000000))
 
 	gasPrice, err := blClinet.SuggestGasPrice(context.Background())
-	// gasLimitBigF := new(big.Int)
-	// gasLimitBigF.SetString(strconv.FormatInt( gasLimit, 10), 10)
-	// fmt.Println("gasPrice: ", gasPrice)
-	// fmt.Println("trnx cost: ", (gasPrice).Mul(gasPrice, gasLimitBigF))
+
+	gasLimitBigF := new(big.Int)
+	gasLimitBigF.SetString(strconv.FormatInt( gasLimit, 10), 10)
+	tnxCost := (gasPrice).Mul(gasPrice, gasLimitBigF)
+
 	if(err != nil){
 		log.Fatal(err)
 	}
@@ -44,7 +49,8 @@ func MakeTransaction(account1 string, account2 string, value float64, blClinet e
 	if(err != nil){
 		log.Fatal(err)
 	}
-
+	
+	fmt.Println("ac1Details.URLpath: ",ac1Details.URLpath)
 	keystoreBytes, err := ioutil.ReadFile(ac1Details.URLpath)
 	if(err != nil){
 		log.Fatal(err)
@@ -62,5 +68,5 @@ func MakeTransaction(account1 string, account2 string, value float64, blClinet e
 		log.Fatal(err)
 	}
 
-	return signedTx.Hash().Hex(), nil
+	return signedTx.Hash().Hex(), nil, tnxCost
 }

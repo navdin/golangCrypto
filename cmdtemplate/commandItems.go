@@ -67,7 +67,7 @@ func F3() {
 		return
 	}
 	acDetails := blockchain.AccountMap[validInput]
-	lastNTxs := mapAccLastNTranxs[acDetails.AddressString]
+	lastNTxs := mapAccLastNTranxs[acDetails.Id]
 	if lastNTxs == nil {
 		fmt.Println("No transactions made on wallet-id ", validInput)
 		return
@@ -92,12 +92,17 @@ func F5() {
 	if !IsAnyWalletCreated() {
 		return
 	}
+	goAhead := CheckBalaceInWallet(ACCOUNT_MAIN)
+	if !goAhead {
+		fmt.Println("Insufficient funds in main-account. \nClose and restart this program. \nIf problem persists then contact administrator to add more funds in main-account.")
+	}
 	got, validInput := takeValidWalletInput()
 	if !got {
 		return
 	}
+	fmt.Println("Enter only ", MinTransferValue, " amount. Maintain more balance in main-account.")
 	ethValue, got := takeEthValueInput()
-	if(!got){
+	if !got {
 		return
 	}
 	TransferEthBetweenAccounts(ACCOUNT_MAIN, validInput, ethValue, true)
@@ -109,10 +114,15 @@ func F6() {
 	}
 	if blockchain.GetAccountSize() < 2 {
 		fmt.Println("Only one wallet created. Create atleast 2 wallets.")
+		return
 	}
 	fmt.Println("From-Wallet ")
 	got, fromWallet := takeValidWalletInput()
 	if !got {
+		return
+	}
+	goAhead := CheckBalaceInWallet(fromWallet)
+	if !goAhead {
 		return
 	}
 	fmt.Println("To-Wallet ")
@@ -120,8 +130,9 @@ func F6() {
 	if !got {
 		return
 	}
+
 	ethValue, got := takeEthValueInput()
-	if(!got){
+	if !got {
 		return
 	}
 	TransferEthBetweenAccounts(fromWallet, toWallet, ethValue, true)
@@ -129,8 +140,7 @@ func F6() {
 
 func F7() {
 	//main account balance
-	acDetails := blockchain.AccountMap[ACCOUNT_MAIN]
-	bal := GetCurrentBalanceInAccount(acDetails.AddressString)
+	bal := GetCurrentBalanceInAccount(ACCOUNT_MAIN)
 	fmt.Println("Balance in MAIN_ACCOUNT is: ", bal, " ETH")
 }
 
@@ -147,7 +157,7 @@ func F8() {
 	walletDetails := blockchain.AccountMap[validInput]
 	ethValueFloat64, goAhead := MaintainMinBalance(ethBal)
 	if goAhead {
-	   TransferEthBetweenAccounts(validInput, ACCOUNT_MAIN, ethValueFloat64, true)
+		TransferEthBetweenAccounts(validInput, ACCOUNT_MAIN, ethValueFloat64, true)
 	}
 	RemoveFileFromCurrentDir(walletDetails.URLpath)
 	delete(blockchain.AccountMap, walletDetails.Id)
@@ -178,7 +188,7 @@ func transferBalancesToMainAccount(enablePrints bool) {
 			ethBal := GetCurrentBalanceInAccount(val.Id)
 			ethValueFloat64, goAhead := MaintainMinBalance(ethBal)
 			if goAhead {
-			 TransferEthBetweenAccounts(fromAcDetails.Id, mainAcDetails.Id, ethValueFloat64, false)
+				TransferEthBetweenAccounts(fromAcDetails.Id, mainAcDetails.Id, ethValueFloat64, false)
 			}
 			RemoveFileFromCurrentDir(fromAcDetails.URLpath)
 			delete(blockchain.AccountMap, key)
@@ -198,24 +208,23 @@ func MaintainMinBalance(ethBal *big.Float) (float64, bool) {
 	return ethValueF64, true
 }
 
-func RoundOffToFloat64(ethBal *big.Float) (float64) {
-	
+func RoundOffToFloat64(ethBal *big.Float) float64 {
+
 	ethValueF64, _ := ethBal.Float64()
 	copyVal := new(big.Float)
 	copyVal.SetString(fmt.Sprintf("%v", ethValueF64))
-	
 
 	if ethBal.Cmp(copyVal) != 0 {
 		balStr := fmt.Sprintf("%v", ethBal)
 		balF64str := fmt.Sprintf("%v", ethValueF64)
-		lastCharBigF := balStr[len(balF64str)-1:len(balF64str)]
-		fmt.Println("lastCharBigF: ",lastCharBigF)
+		lastCharBigF := balStr[len(balF64str)-1 : len(balF64str)]
+		fmt.Println("lastCharBigF: ", lastCharBigF)
 		lastCharF64 := balF64str[len(balF64str)-1:]
-		fmt.Println("lastCharF64: ",lastCharF64)
-		if lastCharBigF == lastCharF64{
+		fmt.Println("lastCharF64: ", lastCharF64)
+		if lastCharBigF == lastCharF64 {
 			return ethValueF64
 		}
-		balF64str = balF64str[0:len(balF64str)-1]
+		balF64str = balF64str[0 : len(balF64str)-1]
 		ethValueF64, _ = strconv.ParseFloat(balF64str, 64)
 		fmt.Println("ethBal:      ", ethBal)
 		fmt.Println("ethValueF64: ", ethValueF64)
@@ -256,7 +265,7 @@ func takeEthValueInput() (float64, bool) {
 	count := 0
 	for {
 		count++
-		if count == 2{
+		if count == 2 {
 			fmt.Println("Max retries exceeded.")
 			return -1, false
 		}
@@ -264,7 +273,7 @@ func takeEthValueInput() (float64, bool) {
 
 		var input float64
 		fmt.Scanln(&input)
-		
+
 		if input == 0 || input == 0.0 {
 			fmt.Println("Zero value entered. Enter a value greater than 0.01")
 			continue
@@ -350,8 +359,22 @@ func DeleteWalletsFromPrevSession() {
 func MoreThanMinTransferValue(val big.Float) bool {
 	bigMinTrans := new(big.Float)
 	bigMinTrans.SetString(fmt.Sprintf("%v", MinTransferValue))
-	if(val.Cmp(bigMinTrans) == -1){
+	if val.Cmp(bigMinTrans) == -1 {
 		return false
 	}
 	return true
+}
+
+func CheckBalaceInWallet(walletId string) bool {
+	bal := GetCurrentBalanceInAccount(walletId)
+	fmt.Println("Balance in wallet ", walletId, ":", bal, " ETH.")
+	balF64, _ := bal.Float64()
+	transferableBal := balF64 - WalletMinBalance
+	if transferableBal >= MinTransferValue {
+		fmt.Println("Transferable Balance: ", transferableBal)
+		return true
+	} else {
+		fmt.Println("Transferable balance is less than minimum transfer amount. Please add ", MinTransferValue, " ETH to from-wallet ", walletId)
+	}
+	return false
 }

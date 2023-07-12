@@ -14,15 +14,16 @@ type EthTransaction struct{
 	fromAcc string
 	toAcc string
 	ethValue float64
-	time time.Time
+	tnxCost string
+	time string
 	txHex string
 }
 
 // last N transactions to be maintained, change N here to change size of lastNTransactions
 const NTxSize = 5
 
-var lastNTransactions []EthTransaction
-var mapAccLastNTranxs map[string][]EthTransaction
+var lastNTransactions []EthTransaction = []EthTransaction{}
+var mapAccLastNTranxs map[string][]EthTransaction = map[string][]EthTransaction{}
 
 func TransferEthBetweenAccounts(fromAcc string, toAcc string, ethVal float64, enablePrints bool){
 	if(ethVal == 0 || ethVal == 0.0){
@@ -39,7 +40,7 @@ func TransferEthBetweenAccounts(fromAcc string, toAcc string, ethVal float64, en
 		}
 		return
 	}
-	txHex, err := blockchain.MakeTransaction(fromAcc, toAcc, ethVal, *CreateClientTestNet().GetEthClient())
+	txHex, err, tnxCost := blockchain.MakeTransaction(fromAcc, toAcc, ethVal, *CreateClientTestNet().GetEthClient())
 	if(err != nil){
 		log.Fatal(err)
 	}
@@ -47,11 +48,12 @@ func TransferEthBetweenAccounts(fromAcc string, toAcc string, ethVal float64, en
 		fromAcc: fromAcc,
 		toAcc: toAcc,
 		ethValue: ethVal,
-		time: time.Now(),
+		tnxCost: tnxCost.String() + " wei",
+		time: time.Now().Local().String(),
 		txHex: txHex,
 	}
 
-	UpdateIfTxnSizeIsN(lastNTransactions, newTx)
+	lastNTransactions = UpdateIfTxnSizeIsN(lastNTransactions, newTx)
 	updateAccountLastNTranxs(newTx)
 	if(enablePrints){
 	    fmt.Println("Transaction completed.")
@@ -64,7 +66,6 @@ func CheckSufficientBalance(fromAcc string, transferValue float64) (bool) {
 	transferValF := new(big.Float)
 	transferValF.SetString(fmt.Sprintf("%v", transferValue))
 	// transferValEth :=  new(big.Float).Quo(transferInt, big.NewFloat(math.Pow10(18)))
-	fmt.Println("bal: ",accBal, " , transferVal: ", transferValF)
 	res := accBal.Cmp(transferValF)
 	fmt.Println("res: ", res)
 	if res == -1 {
@@ -76,17 +77,20 @@ func CheckSufficientBalance(fromAcc string, transferValue float64) (bool) {
 func updateAccountLastNTranxs(newTnx EthTransaction) {
 
 	lastN := mapAccLastNTranxs[newTnx.fromAcc]
-	UpdateIfTxnSizeIsN(lastN, newTnx)
+	mapAccLastNTranxs[newTnx.fromAcc] = UpdateIfTxnSizeIsN(lastN, newTnx)
 
 	lastN = mapAccLastNTranxs[newTnx.toAcc]
-	UpdateIfTxnSizeIsN(lastN, newTnx)
+	mapAccLastNTranxs[newTnx.toAcc] = UpdateIfTxnSizeIsN(lastN, newTnx)
+
 }
 
-func UpdateIfTxnSizeIsN(txList []EthTransaction, newTx EthTransaction){
+func UpdateIfTxnSizeIsN(txList []EthTransaction, newTx EthTransaction) []EthTransaction {
+
 	if len(txList) == NTxSize {
 		txList = txList[1:]
 	}
 	txList = append(txList, newTx)	
+	return txList
 }
 
 

@@ -6,5 +6,5 @@ const InfuraMainnetUrl = "https://mainnet.infura.io/v3/d4402942aa1441dca8453c081
 const InfuraGuerliUrl = "https://goerli.infura.io/v3/d4402942aa1441dca8453c0819553265"
 const InfuriaSepoliaUrl = "https://sepolia.infura.io/v3/d4402942aa1441dca8453c0819553265"
 const CustomBlockchainUrl = InfuriaSepoliaUrl
-const MinTransferValue = 0.01  //ETH. As cost of transaction on eth network is 0.0042 ETH
-const WalletMinBalance = 0.0001 //To compenstae for min balance of price * gas + value
+const MinTransferValue = 0.001  //ETH. As cost of transaction on eth network is 0.0042 ETH
+const WalletMinBalance = 0.00001 //ETH. To compensate for min balance of price * gas + value

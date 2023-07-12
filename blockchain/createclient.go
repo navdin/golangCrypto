@@ -57,7 +57,7 @@ func (eth *EthBlockChain) GetBalanceAtAddress(addr string) *big.Float {
 	if err != nil {
 		log.Fatal("error occured ", err)
 	}
-
+	fmt.Println("balance: ", balance)
 	balancef := new(big.Float)
 	balancef.SetString(balance.String())
 	balanceEth := new(big.Float).Quo(balancef, big.NewFloat(math.Pow10(18)))

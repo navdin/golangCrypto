@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"strconv"
+	"strings"
 
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -29,13 +30,15 @@ func NewAccount(keystoreLocation string, pass string) *AccountDetails {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("new wallet address: ", accountNew.Address)
+	fmt.Println("new wallet address: ", accountNew.Address.Hex())
 	accountCount = accountCount+1;
 
+	urlStartIndex := strings.Index(accountNew.URL.Path, "/wallet")
+	urlPath := "."+accountNew.URL.Path[urlStartIndex:]
 	acDets := AccountDetails{
 		AddressString:          accountNew.Address.Hex(),
 		KeystoreLocation: keystoreLocation,
-		URLpath:          accountNew.URL.Path,
+		URLpath:          urlPath,
 		Password:         pass,
 		Id : "AC"+strconv.Itoa(accountCount),
 	}

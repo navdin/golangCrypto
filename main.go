@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"math/big"
+	"strings"
 
 	// "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common"
@@ -62,11 +62,11 @@ func main() {
 
 
 func test(){
-	 amountF := new(big.Float)
-	 amountF.SetString(".099999998430674964")
-	 amountF64 := cmdtemplate.RoundOffToFloat64(amountF)
-	 fmt.Println("\n\namountF:   ", amountF)
-	 fmt.Println("amountF64: ", amountF64)
+	//  amountF := new(big.Float)
+	//  amountF.SetString(".099999998430674964")
+	//  amountF64 := cmdtemplate.RoundOffToFloat64(amountF)
+	//  fmt.Println("\n\namountF:   ", amountF)
+	//  fmt.Println("amountF64: ", amountF64)
 	 
 	//  os := fmt.Sprintf("%v", amountF)
 	//  fmt.Println("os:        ", os)
@@ -90,8 +90,11 @@ func test(){
 
 	// amount := big.NewInt(int64((0.0999999984306749444 * 1000000000000000000)))
 	// fmt.Println(amount)
-
-
+	url := "/Users/navin/Documents/goCrypto/wallet/others/UTC--2023-07-12T20-02-02.451108000Z--52857bcdb2c6cb1c60131bc41ad67749863b1773"
+	urlStartIndex := strings.Index(url, "/wallet")
+	fmt.Println("urlStartIndex: ",urlStartIndex)
+	urlPath := "."+url[urlStartIndex:]
+	fmt.Println(urlPath)
 	return
 
 	// adr1 := common.HexToAddress("b2dd978ef739f2a8baaa995b66ee44d1c2a9255a")
@@ -101,6 +104,7 @@ func test(){
 //    ethClient := blockchain.GetEthBlockchainCustom(infuriaSepoliaUrl)
 
 // fmt.Println("balance at ac1 infuraMainnetUrl: ",ethClient.GetBalanceAtAddress("f27f127f8d636f73b1395266fcdfbee9cf599885"))
+
 fmt.Println("main ac hex to adr", common.HexToAddress("0x280FE7cF3849dc013F21b358A2C54D71b2a0CbC6"))
 return
 map1 := map[string]string{}
